@@ -1,10 +1,11 @@
 function lexer(input) {
-	const split_cmd = input.split(" ");
-	const [op,args] = split_cmd;
+	const split_cmd = input.toLowerCase().split("");
 	const token = {
-		operation: op,
-		arguments: args
+		operation: split_cmd[0]
 	};
+	for(let i = 1; i < split_cmd.length; i++) {
+		token["arg_"+i] = split_cmd[i]
+	}
 	return token;
 };
 
@@ -37,24 +38,20 @@ function updateIndexes() {
 }
 
 function move(args) {
-	const split_args = args.split(",");
-	const [dest,from,index] = split_args;
-	const indexNum = parseInt(index);
-	if(isNaN(indexNum)) {
-		throwError("Index: " + index + " is geen nummer");
-	} else if(!document.getElementById(dest)){
-		throwError("Container: " + dest + " Bestaat niet");
-	} else {
-		const fromContainer = document.getElementById(from);
-		const fromChildren = fromContainer.children;
-		const target = document.getElementById(dest);
-		fromChildren[indexNum-1].classList.add("remove");
-		setTimeout(()=>{
-			target.appendChild(fromChildren[indexNum-1]);
-			updateIndexes();
-		},500)
-		
+	let {_,arg_1,arg_2,arg_3} = args;	
+	if(isNaN(arg_3)) {
+		throwError("Argument 3 is geen nummer");
 	}
+	let num = parseInt(arg_3);
+	const target = document.getElementById(arg_1);
+	const from = document.getElementById(arg_2);
+	let index = from.children[num-1];
+	index.classList.add("remove");
+	setTimeout(() => {
+		target.appendChild(index);
+		updateIndexes();
+	},500)
+	
 };
 
 function throwError(err) {
@@ -65,7 +62,7 @@ function throwError(err) {
 function parser(token) {
 	switch(token.operation){
 		case "m":
-			move(token.arguments);
+			move(token);
 		break
 		default:
 			throwError(token.operation + " is geen functie");
@@ -76,69 +73,37 @@ function parser(token) {
 (() => {
 	const btn = document.getElementById("run");
 	const input = document.getElementById("input");
-	btn.addEventListener("keypress",keyEventHandler,true);
-	function keyEventHandler(e) {
+	input.addEventListener("keypress",eventHandler,true);
+	btn.addEventListener("keypress",eventHandler,true);
+	btn.addEventListener("click",eventHandler,true);
+	input.addEventListener("keyup",upHandler,true)
+	function upHandler() {
+		let splitInput = this.value.toLowerCase().split("");
+		const from = splitInput[2];
+		const fromContainer = document.getElementById(from);
+		if(splitInput.length > 3 && !isNaN(parseInt(splitInput[splitInput.length-1]))) {
+			
+			const index = parseInt(splitInput[3]) - 1;
+			if(!fromContainer.children[index]) {
+				throwError("Element: "+(index+1)+" bestaat niet :(");
+			}
+			fromContainer.children[index].classList.add("selected");
+
+		}else {
+			const children = fromContainer.children;
+
+			for(let i = 0; i < children.length; i++) {
+				children[i].classList.remove("selected");
+			}
+		}
+	}
+	function eventHandler(e) {
 		const {keyCode} = e;
-		if(keyCode === 13) {
+		if(keyCode === 13 || e.type === "click") {
 			parser(lexer(input.value));
-			document.getElementById("input-dest").innerHTML = "";
 			input.value = "";
+			const errorContainer = document.getElementById("error").innerHTML = "";
 		}
 	};
 
 })();
-
-
-
-
-(() => {
-
-	const inputDest = document.getElementById("input-dest");
-	const input = document.querySelector("[type=text]");
-	const dict = ["m"];
-	input.addEventListener("keyup",handleKbEvents,true)
-	
-	function handleKbEvents(e) {
-	  const {keyCode} = e;
-	  inputDest.innerHTML = this.value;
-		
-		const tokens = this.value.split(",");
-
-	  if(tokens.length > 2 && !isNaN(parseInt(tokens[2]))) {
-	  	console.log(tokens.length);
-	  	const [_,from,index] = tokens;
-	  	const int = parseInt(index);
-
-	  	document.getElementById(from).children[index-1].classList.add("selected")
-
-	  	//console.log(index);
-	  }else if(document.getElementById(tokens[1])){
-	  	const {children} = document.getElementById(tokens[1]);
-	  	for(let i = 0; i < children.length; i++) {
-	  		children[i].classList.remove("selected");
-	  	}
-	  }
-
-
-	  if(this.value.indexOf(" ") >= 0) {
-	    const splitStr = this.value.split(" ");
-	    const functionSpan = document.createElement("span");
-	    const argSpan = document.createElement("span");
-	    argSpan.setAttribute("class","args")
-	    functionSpan.innerHTML = splitStr[0] + " ";
-	    argSpan.innerHTML = splitStr[1];
-	    if(dict.indexOf(splitStr[0]) >= 0) {
-	      functionSpan.setAttribute("class","func");
-	      inputDest.innerHTML = "";
-	      inputDest.appendChild(functionSpan);
-	      inputDest.appendChild(argSpan);
-	    }else if(dict.indexOf(splitStr[0]) < 0) {
-	      functionSpan.setAttribute("class","error");
-	      inputDest.innerHTML = "";
-	      inputDest.appendChild(functionSpan);
-	      inputDest.appendChild(argSpan);
-	    }
-	  }
-	}
-
-})()
