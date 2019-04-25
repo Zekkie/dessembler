@@ -43,8 +43,8 @@ function move(args) {
 		throwError("Argument 3 is geen nummer");
 	}
 	let num = parseInt(arg_3);
-	const target = document.getElementById(arg_1);
-	const from = document.getElementById(arg_2);
+	const from = document.getElementById(arg_1);
+	const target = document.getElementById(arg_2);
 	let index = from.children[num-1];
 	index.classList.add("remove");
 	setTimeout(() => {
@@ -79,7 +79,7 @@ function parser(token) {
 	input.addEventListener("keyup",upHandler,true)
 	function upHandler() {
 		let splitInput = this.value.toLowerCase().split("");
-		const from = splitInput[2];
+		const from = splitInput[1];
 		const fromContainer = document.getElementById(from);
 		if(splitInput.length > 3 && !isNaN(parseInt(splitInput[splitInput.length-1]))) {
 			
